@@ -1,0 +1,184 @@
+<!DOCTYPE  html>
+<html>
+	<head>
+		<link rel="stylesheet" href="styles/kendo.common.css" />
+		<link rel="stylesheet" href="styles/kendo.metro.css" />
+		<script type="text/javascript" src="js/jquery.min.js"></script>
+		<script type="text/javascript" src="js/kendo.web.js"></script>
+	</head>
+	<body>
+		<div id="container">
+			<div id="header">
+				<h1>新闻发布平台</h1>
+			</div>
+			<div id="main" >
+				<ul id="menu" style="width:20%;display: inline-block;float:left">
+					<li>
+						新闻管理
+						<ul>
+							<li>
+								<a>发布新闻</a>
+							</li>
+							<li>
+								<a>草稿</a>
+							</li>
+							<li>
+								<a>删除新闻</a>
+							</li>
+						</ul>
+					</li>
+					<li>
+						用户
+
+					</li>
+					<li>
+						设置
+
+					</li>
+					<li>
+						<a>注销</a>
+					</li>
+				</ul>
+				<div id="detail" style="display: inline-block;width:78%;margin-left:1%">
+					<div class="k-block" style="width:100%;height:100%">
+						<div class="k-header k-shadow">
+							新闻列表
+						</div>
+
+						<div id="listgrid"></div>
+					</div>
+				</div>
+			</div>
+
+		</div>
+		<script type=text/javascript>
+			$(document).ready(function() {
+				$("#menu").kendoPanelBar({
+					expandMode : "single"
+				});
+				var newsSource = new kendo.data.DataSource({
+					transport : {
+						read : {
+							url : 'getnewslist',
+							dataType : "json"
+						},
+						update : {
+							url : 'updatenews',
+							dataType : "json"
+						},
+						destroy : {
+							url : 'removenews',
+							dataType : "json"
+						},
+						create : {
+							url : 'createnews',
+							dataType : "json"
+						},
+						parameterMap : function(options, operation) {
+							if (operation !== "read" && options.models) {
+								return {
+									models : kendo.stringify(options.models)
+								};
+							}
+						}
+					},
+					batch : true,
+					pageSize : 10,
+					schema : {
+						model : {
+							id : "newsID",
+							fields : {
+								newsID : {
+									editable : false,
+									nullable : true
+								},
+								title : {
+									required : true
+								},
+								content : {
+								},
+								publishDate : {
+									type : "date",
+
+								},
+								type : {
+									// type : "boolean"
+								},
+								tag : {
+									// type : "number",
+									// validation : {
+									// min : 0,
+									// required : true
+									// }
+								}
+							}
+						}
+					}
+				});
+				$("#listgrid").kendoGrid({
+					dataSource : newsSource,
+					navigatable : true,
+					pageable : true,
+					height : 560,
+					toolbar : [{
+						name : 'create',
+						text : '新增'
+					}, {
+						name : 'save',
+						text : '保存'
+					}],
+					columns : [{
+						field : "title",
+						title : "标题"
+					}, {
+						field : "content",
+						title : "内容",
+						editor : function(container, options) {
+							// create a KendoUI AutoComplete widget as column editor
+							var input = $('<input name="' + options.field + '"/>').appendTo(container);
+							var editWindow = $('<div></div>').prependTo(container);
+							console.log(options);
+							console.log(container);
+							// editor.kendoEditor();
+							editWindow.kendoWindow({
+								width : "700px",
+								height : 600,
+								actions : [/*"Minimize", "Maximize", */"Pencil", "Close"],
+								title : "编辑新闻内容",
+								'content.template' : 'hi',
+								modal : true,
+							});
+							editWindow.data("kendoWindow").center();
+							var editor = $('<div></div>').prependTo($(editWindow.getKendoWindow().element));
+							editor.height(560).kendoEditor();
+							editor.data("kendoEditor").paste(options.model.content);
+							editWindow.data("kendoWindow").wrapper.find(".k-i-pencil").click(function(e) {
+								options.model.content = editor.data("kendoEditor").encodedValue();
+								editWindow.data("kendoWindow").close();
+								e.preventDefault();
+							});
+						}
+					}, {
+						field : "publishDate",
+						title : "发布日期",
+						format : "{0:dd/MMMM/yyyy}",
+						width : 150
+					}, {
+						field : "type",
+						title : "类型",
+						width : 150
+					}, {
+						field : "tag",
+						title : "标签",
+						width : 100
+					}, {
+						command : "destroy",
+						title : "操作",
+						width : 110
+					}],
+					editable : true
+				});
+			});
+		</script>
+	</body>
+</html>
